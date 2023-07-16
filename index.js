@@ -1,13 +1,29 @@
 require("dotenv").config();
 const discord = require("discord.js");
-const client = new discord.Client({
-  intents: ["Guilds", "GuildMessages", "MessageContent"],
-});
+const client = new discord.Client({intents: ["Guilds", "GuildMessages", "MessageContent"]});
 const axios = require("axios");
 client.on("ready", () => console.log(`${client.user.tag} is logged in`));
 const path = require('path');
 const filePath = path.resolve(__dirname, 'index.html');
 const fs = require("fs");
+const express = require("express");
+const app = express();
+app.get('/', (req, res) => {
+  res.sendFile(`${__dirname}/botidk.html`);
+  res.status(200)
+});
+app.listen(3000, () => {
+  console.log('Bot is ready to online!');
+});
+client.on("ready", async () => {
+  app.get('/apidata', async (req, res) => {
+    let data = {
+      serverCount: client.guilds.cache.size,
+      uptime: client.uptime
+    }
+    res.json(data)
+  })
+})
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
