@@ -1,71 +1,52 @@
 require("dotenv").config();
 const discord = require("discord.js");
-const client = new discord.Client({intents: ["Guilds", "GuildMessages", "MessageContent"]});
+const client = new discord.Client({
+  intents: ["Guilds", "GuildMessages", "MessageContent"],
+});
 const axios = require("axios");
 client.on("ready", () => console.log(`${client.user.tag} is logged in`));
-const path = require('path');
-const filePath = path.resolve(__dirname, 'index.html');
+const path = require("path");
+const filePath = path.resolve(__dirname, "index.html");
 const fs = require("fs");
 const express = require("express");
 const app = express();
-app.get('/', (req, res) => {
+const puppeteer = require("puppeteer");
+const openaishit = new (require("openai")).OpenAIApi(new (require("openai")).Configuration({ apikey: process.env.apiKey }));
+app.get("/", (req, res) => {
   res.sendFile(`${__dirname}/botidk.html`);
-  res.status(200)
+  res.status(200);
 });
-app.listen(3000, () => {
-  console.log('Bot is ready to online!');
+app.listen(3000, () => {});
+app.get("/ip", async (req, res) => {
+  const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+  return res.send(
+    `Your IP: ${ip} and it will be logged to a discord webhook. (totally real)`
+  );
 });
-client.on("ready", async () => {
-  app.get('/apidata', async (req, res) => {
-    let data = {
-      serverCount: client.guilds.cache.size,
-      uptime: client.uptime
-    }
-    res.json(data)
-  })
-})
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  const puppeteer = require('puppeteer');
-
-(async () => {
+  (async () => {
+    // console.log(await axios.get("https://wandbox.org/api/list.json"));
+    // const compiling = await axios.post("https://wandbox.org/api/compile.json", {
+    //   code: "print(input())",
+    //   compiler: "cpython-3.10.2",
+    //   stdin: "dick",
+    // });
+    // console.log(compiling);
+  })();
   const browser = await puppeteer.launch({
-    args: ['--no-sandbox'],
+    args: ["--no-sandbox"],
     headless: "new",
-    defaultViewport: { width: 1280, height: 720 }
+    defaultViewport: { width: 1280, height: 720 },
   });
   const page = await browser.newPage();
   await page.goto(`file://${filePath}`);
-  fs.writeFileSync("index.html", `<!DOCTYPE html>
-  <html lang="en">
-  <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Document</title>
-  </head>
-  <body>
-      <p>fuck</p>
-  </body>
-  </html>`);
-  await page.screenshot({ path: 'screenshot.png' });
-  await browser.close();
-  // console.log(await axios.get("https://wandbox.org/api/list.json"));
-  const compiling = await axios.post(
-    "https://wandbox.org/api/compile.json",
-    {
-      code: "print(input())",
-      compiler: "cpython-3.10.2",
-      stdin: "dick"
-    }
-  );
-  console.log(compiling)
-})();
-
-
   const cmd = message.content.replace(/^;/, "");
   const regex1 = /compile\s+```([a-zA-Z]+)\s+([\s\S]+?)```/; //compile `language \n code`
   const regex2 = /^compile [a-zA-Z]+ `.*`$/g; //compile language `code`
+  const regex3 = /^compile \| [a-zA-Z]+ ```([a-zA-Z]+)\s+([\s\S]+?)```$/; //compile |stdin`language \n code`;
+  const regex4 = /^compile [a-zA-Z]+ \| [a-zA-Z]+ `.*`$/g;
   const languages = await axios.get("https://wandbox.org/api/list.json"); // sending a request to wandbox.org for all languages
   const supportedLanguages = Object.values(
     languages.data
@@ -97,7 +78,13 @@ client.on("messageCreate", async (message) => {
     rs: "Rust",
   };
   const args = message.content.slice(";".length).trim().split(/ +/);
+  const emojies = [
+    "<a:peepee:1132893146104221739>",
+    "<a:fire:1132893098788266054>",
+  ];
+  const randomemoji = emojies[Math.floor(Math.random() * emojies.length)];
   if (cmd.startsWith("compile")) {
+    message.react(randomemoji);
     if (regex1.test(cmd)) {
       const argssplited = args
         .join()
@@ -113,7 +100,28 @@ client.on("messageCreate", async (message) => {
       }); // finding the right language to compile in wandbox.org
       console.log(language);
       console.log(langcompiled);
+      if(!code) {
+        message.reactions.removeAll();
+        message.channel.send(`There is no codeblock or it is without a language. Make one by:
+        \`\`\`language
+        code
+        \`\`\``)
+      }
+      if (language === "html") {
+        message.reactions.removeAll();
+        fs.writeFileSync("index.html", code);
+        await page.screenshot({ path: "screenshot.png" });
+        const screenshit = new discord.AttachmentBuilder("./screenshot.png");
+        await browser.close();
+        message.reactions.removeAll();
+        message.channel.send({
+          files: [screenshit],
+        });
+        return;
+      }
+      
       if (!langcompiled) {
+        message.reactions.removeAll();
         return message.channel.send({
           embeds: [
             new discord.EmbedBuilder()
@@ -133,6 +141,7 @@ client.on("messageCreate", async (message) => {
       );
       //no error
       if (compiling.data.program_error.length === 0) {
+        message.reactions.removeAll();
         message.channel.send({
           embeds: [
             new discord.EmbedBuilder()
@@ -151,6 +160,7 @@ client.on("messageCreate", async (message) => {
         });
       } else {
         //yes error
+        message.reactions.removeAll();
         message.channel.send({
           embeds: [
             new discord.EmbedBuilder()
@@ -178,7 +188,27 @@ client.on("messageCreate", async (message) => {
       });
 
       const code = args[1].replace(/`/g, "");
+      if(!code) {
+        message.reactions.removeAll();
+        message.channel.send(`There is no codeblock or it is without a language. Make one by:
+        \`\`\`language
+        code
+        \`\`\``)
+      }
+      if (language === "html") {
+        message.reactions.removeAll();
+        fs.writeFileSync("index.html", code);
+        await page.screenshot({ path: "screenshot.png" });
+        const screenshit = new discord.AttachmentBuilder("./screenshot.png");
+        await browser.close();
+        message.reactions.removeAll();
+        message.channel.send({
+          files: [screenshit],
+        });
+        return;
+      }
       if (!langcompiled) {
+        message.reactions.removeAll();
         return message.channel.send({
           embeds: [
             new discord.EmbedBuilder.setTitle(
@@ -198,6 +228,7 @@ client.on("messageCreate", async (message) => {
       );
       //no error
       if (compiling.data.program_error.length === 0) {
+        message.reactions.removeAll();
         message.channel.send({
           embeds: [
             new discord.EmbedBuilder()
@@ -214,7 +245,8 @@ client.on("messageCreate", async (message) => {
               }),
           ],
         });
-      }  else {
+      } else {
+        message.reactions.removeAll();
         //yes error
         message.channel.send({
           embeds: [
@@ -232,7 +264,168 @@ client.on("messageCreate", async (message) => {
           ],
         });
       }
-    }  else {
+    } else if (regex3.test(cmd)) {
+      console.log("regex 3 is tested");
+      const argssplited = args
+        .join()
+        .split("\n")
+        .filter((obj) => obj.length > 0); // splitting args
+      argssplited.push(argssplited[0]);
+      const language = argssplited[0].replace(/`/g, "").replace("compile,", "").replace(/.*,\s*(\w+).*/, '$1');; // language for the compile
+      const code = argssplited[1].replace(/`/g, "").replace(/,/g, " "); // code
+      const stdin = argssplited[2].replace(/`/g, "").replace(/.*,\|,(.*),.*/, '$1');
+      if(!stdin) return;
+      let langcompiled;
+      console.log(language)
+      supportedLanguages.forEach((lang, num) => {
+        if (lang.language === supportedLanguagesObj[language]) {
+          langcompiled = lang.name;
+        }
+      }); // finding the right language to compile in wandbox.org
+      if(!code) {
+        message.reactions.removeAll();
+        message.channel.send(`There is no codeblock or it is without a language. Make one by:
+        \`\`\`language
+        code
+        \`\`\``)
+      }
+
+      if (!langcompiled) {
+        message.reactions.removeAll();
+        return message.channel.send({
+          embeds: [
+            new discord.EmbedBuilder()
+              .setTitle("Language not found")
+              .setDescription(
+                ` The language that you are using is not found on wandbox.org.\nAvailable languages: ${stringLanguages}`
+              ),
+          ],
+        });
+      }
+      const compiling = await axios.post(
+        "https://wandbox.org/api/compile.json",
+        {
+          code: code,
+          compiler: langcompiled,
+          stdin: stdin
+        }
+      );
+      //no error
+      if (compiling.data.program_error.length === 0) {
+        message.reactions.removeAll();
+        message.channel.send({
+          embeds: [
+            new discord.EmbedBuilder()
+              .setTitle("Program Output")
+              .setDescription(
+                `\`\`\`${
+                  compiling.data.program_output ||
+                  compiling.data.compiler_output
+                }\`\`\``
+              )
+              .setColor("#1abc9c")
+              .setFooter({
+                text: `${message.author.tag} | ${langcompiled} on wandbox.org`,
+              }),
+          ],
+        });
+      } else {
+        //yes error
+        message.reactions.removeAll();
+        message.channel.send({
+          embeds: [
+            new discord.EmbedBuilder()
+              .setTitle("Program Output")
+              .setDescription(
+                `\`\`\`${
+                  compiling.data.program_error || compiling.data.compiler_error
+                }\`\`\``
+              )
+              .setColor("#1abc9c")
+              .setFooter({
+                text: `${message.author.tag} | ${langcompiled} on wandbox.org`,
+              }),
+          ],
+        });
+      }
+    } else if (regex4.test(cmd)) {
+      console.log("regex4 is tested")
+      const language = args[0];
+      const stdin = args[2]
+      const code = args[1].replace(/`/g, "");
+      console.log(language)
+      let langcompiled;
+      supportedLanguages.forEach((lang, num) => {
+        if (lang.language === supportedLanguagesObj[language]) {
+          langcompiled = lang.name;
+        }
+      });
+      if(!code) {
+        message.reactions.removeAll();
+        message.channel.send(`There is no codeblock or it is without a language. Make one by:
+        \`\`\`language
+        code
+        \`\`\``)
+      }
+      if (!langcompiled) {
+        message.reactions.removeAll().catch(e => {});
+        return message.channel.send({
+          embeds: [
+            new discord.EmbedBuilder.setTitle(
+              "Language not found"
+            ).setDescription(
+              ` The language that you are using is not found on wandbox.org.\nAvailable languages: ${stringLanguages}`
+            ),
+          ],
+        });
+      }
+      const compiling = await axios.post(
+        "https://wandbox.org/api/compile.json",
+        {
+          code: code,
+          compiler: langcompiled,
+          stdin: stdin
+        }
+      );
+      //no error
+      if (compiling.data.program_error.length === 0) {
+        message.reactions.removeAll();
+        message.channel.send({
+          embeds: [
+            new discord.EmbedBuilder()
+              .setTitle("Program Output")
+              .setDescription(
+                `\`\`\`${
+                  compiling.data.program_output ||
+                  compiling.data.compiler_output
+                }\`\`\``
+              )
+              .setColor("#1abc9c")
+              .setFooter({
+                text: `${message.author.tag} | ${langcompiled} on wandbox.org`,
+              }),
+          ],
+        });
+      } else {
+        message.reactions.removeAll();
+        //yes error
+        message.channel.send({
+          embeds: [
+            new discord.EmbedBuilder()
+              .setTitle("Program Output")
+              .setDescription(
+                `\`\`\`${
+                  compiling.data.program_error || compiling.data.compiler_error
+                }\`\`\``
+              )
+              .setColor("#1abc9c")
+              .setFooter({
+                text: `${message.author.tag} | ${langcompiled} on wandbox.org`,
+              }),
+          ],
+        });
+      }
+    }else {
       return message.channel.send({
         embeds: [
           new discord.EmbedBuilder()
@@ -265,17 +458,17 @@ client.on("messageCreate", async (message) => {
           .setDescription(
             "I'm the compiler of imagine gaming play's server. The most valid one in existance The only commands:"
           )
-          .addFields({
-            name: "`;compile`",
-            value:
-              "Run it by appending a code block anywhere in the message. The supported languages are the languages that [Wandbox](https://wandbox.org) supports. For stdin, add `|stdinhere` before the code block. \n Example:\n\n;compile \\`\\`\\`py\nprint('Hello world!')\\`\\`\\` \n\n ;compile | hello there \\`\\`\\`py\nprint(input()) # prints out 'hello there'\n\\`\\`\\`",
-            
-          },
-          {
-            name: '`;languages or ;lang`',
-            value: 
-            "Gives a list of supported languages."
-          }),
+          .addFields(
+            {
+              name: "`;compile`",
+              value:
+                "Run it by appending a code block anywhere in the message. The supported languages are the languages that [Wandbox](https://wandbox.org) supports. For stdin, add `|stdinhere` before the code block. \n Example:\n\n;compile \\`\\`\\`py\nprint('Hello world!')\\`\\`\\` \n\n ;compile | hello there \\`\\`\\`py\nprint(input()) # prints out 'hello there'\n\\`\\`\\`",
+            },
+            {
+              name: "`;languages or ;lang`",
+              value: "Gives a list of supported languages.",
+            }
+          ),
       ],
     });
   }
