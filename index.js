@@ -44,7 +44,9 @@ client.on("messageCreate", async (message) => {
   await page.goto(`file://${filePath}`);
   const cmd = message.content.replace(/^;/, "");
   const regex1 = /compile\s+```([a-zA-Z]+)\s+([\s\S]+?)```/; //compile `language \n code`
-  const regex2 = /compile [a-zA-Z]+ `.*`$/g; //compile language `code`
+  const regex2 = /\s*compile\s+([a-zA-Z]+)/; 
+  
+  //compile language `code`
   const regex3 = /compile \| [a-zA-Z]+ ```([a-zA-Z]+)\s+([\s\S]+?)```$/; //compile |stdin`language \n code`;
   const regex4 = /compile [a-zA-Z]+ \| [a-zA-Z]+ `.*`$/g;
   const languages = await axios.get("https://wandbox.org/api/list.json"); // sending a request to wandbox.org for all languages
@@ -76,7 +78,15 @@ client.on("messageCreate", async (message) => {
     cs: "C#",
     ts: "TypeScript",
     rs: "Rust",
+    javascript: "JavaScript",
+    vim: "Vim script",
+    c: "C",
+    pas: "Pascal",
+    swift: "Swift",
+    erl: "Erlang",
+    crystal: "Crystal"
   };
+  
   const args = message.content.slice(";".length).trim().split(/ +/);
   const emojies = [
     "<a:peepee:1132893146104221739>",
@@ -179,15 +189,18 @@ client.on("messageCreate", async (message) => {
       }
     } else if (regex2.test(cmd)) {
       console.log("regex21 is trested");
-      const language = args[0];
+      const language = args[1];
       let langcompiled;
       supportedLanguages.forEach((lang, num) => {
         if (lang.language === supportedLanguagesObj[language]) {
           langcompiled = lang.name;
         }
       });
-
-      const code = args[1].replace(/`/g, "");
+      console.log(args)
+      console.log(language);
+      console.log(langcompiled);
+      const code = args.slice(2).join(" ").replace(/`/g, "");
+      console.log(code)
       if(!code) {
         message.reactions.removeAll();
         message.channel.send(`There is no codeblock or it is without a language. Make one by:
@@ -211,7 +224,8 @@ client.on("messageCreate", async (message) => {
         message.reactions.removeAll();
         return message.channel.send({
           embeds: [
-            new discord.EmbedBuilder.setTitle(
+            new discord.EmbedBuilder()
+            .setTitle(
               "Language not found"
             ).setDescription(
               ` The language that you are using is not found on wandbox.org.\nAvailable languages: ${stringLanguages}`
