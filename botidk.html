@@ -4,27 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#BFFF00"/>
-    <meta property="og:site_name" content="If you see this means the bot is online"/>
-    <meta property="og:description" content="This is UNOfficial Sispiler Webpage, but its not finished yet"/>
-    <meta name="description" content="This is UNOfficial Sispiler Webpage, but its not finished yet"/>
+    <meta property="og:site_name" content="If you see this, it means the bot is online"/>
+    <meta property="og:description" content="This is an unofficial Sispiler Webpage, but it's not finished yet"/>
+    <meta name="description" content="This is an unofficial Sispiler Webpage, but it's not finished yet"/>
     <meta property="og:image" content="https://cdn.discordapp.com/avatars/803524726219079690/b69a2f277cbf43b9025ee10842a39b78.png?size=512&ignore=true"/>
     <link rel="icon" href="https://cdn.discordapp.com/avatars/803524726219079690/b69a2f277cbf43b9025ee10842a39b78.png?size=512&ignore=true"/>
-    <title>UNOfficial Sispiler Webpage</title>
-    <meta property="og:title" content="UNOfficial Sispiler Webpage"/>
+    <title>Unofficial Sispiler Webpage</title>
+    <meta property="og:title" content="Unofficial Sispiler Webpage"/>
     <style>
      @import url('https://fonts.googleapis.com/css2?family=Kumbh+Sans:wght@500&display=swap');
       body {
         background-color: #121212;
         color: #FFFFFF;
-        font-family: 'Kumbh Sans', sans-serif
+        font-family: 'Kumbh Sans', sans-serif;
       }
       #links {
         display: flex;
       }
       @keyframes clicked {
-        from: {background-color:#323232;} 
-        to: {background-color:#585858;}
-        
+        from {background-color:#323232;} 
+        to {background-color:#585858;}
       }
       a {
         text-decoration: none;
@@ -45,10 +44,10 @@
     <script src="https://unpkg.com/axios@1.1.2/dist/axios.min.js"></script>
     <script>
       document.addEventListener("DOMContentLoaded", async () => {
-        const days = document.getElementById("days")
-        const hours = document.getElementById("hours")
-        const minutes = document.getElementById("minutes")
-        const seconds = document.getElementById("seconds")
+        const days = document.getElementById("days");
+        const hours = document.getElementById("hours");
+        const minutes = document.getElementById("minutes");
+        const seconds = document.getElementById("seconds");
         function s(num) {
           var s = num + "";
           while (s.length < 2) s = "0" + s;
@@ -63,24 +62,24 @@
           hours.textContent = s(hour);
           minutes.textContent = s(minute);
           seconds.textContent = s(second);
-          console.log(second)
+          console.log(second);
         }
-        const api = await axios.get("/apidata")
-        const int = api.data.serverCount
-        const uptime = api.data.uptime
-        let sec = 0
+        const api = await axios.get("/apidata");
+        const int = api.data.serverCount;
+        const uptime = api.data.uptime;
+        let sec = 0;
         setInterval(() => {
-          format(uptime + (sec*1000))
-          sec++
-        }, 1000)
-        const number = document.getElementById("number")
-        number.textContent = int.toString()
-      })
+          format(uptime + (sec*1000));
+          sec++;
+        }, 1000);
+        const number = document.getElementById("number");
+        number.textContent = int.toString();
+      });
     </script>
   </head>
   <body>
     <h2>
-      <span style="color: #BFFF00">Sispiler</span> Bot are online
+      <span style="color: #BFFF00">Sispiler</span> Bot is online
     </h2>
     <h2>
       <span style="color: #BFFF00">Uptime: </span><span id="days">00</span>d:<span id="hours">00</span>h:<span id="minutes">00</span>m:<span id="seconds">00</span>s
