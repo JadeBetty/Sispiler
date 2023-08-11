@@ -4,7 +4,7 @@ const client = new discord.Client({
   intents: ["Guilds", "GuildMessages", "MessageContent"],
 });
 const axios = require("axios");
-client.on("ready", () => console.log(`${client.user.tag} is logged in`));
+
 const path = require("path");
 const filePath = path.resolve(__dirname, "index.html");
 const fs = require("fs");
@@ -24,7 +24,15 @@ app.get("/ip", async (req, res) => {
     `Your IP: ${ip} and it will be logged to a discord webhook. (totally real)`
   );
 });
-
+client.on("ready", () => {
+  console.log(`${client.user.tag} is logged in`); app.get('/apidata', async (req, res) => {
+    let data = {
+      serverCount: client.guilds.cache.size,
+      uptime: client.uptime
+    }
+    res.json(data)
+  })
+});
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   //console.log((await axios.post("https://balls-idk.vercel.app/jf", {mode: "string", code: "(![]+[])[+[]]+([][[]]+[])[+[]]+([][(![]+[])[+[]]+(![]+[])[!+[]+!+[]]+(![]+[])[+!+[]]+(!![]+[])[+[]]]+[])[!+[]+!+[]+!+[]]+(+(!+[]+!+[]+[+[]]))[(!![]+[])[+[]]+(!![]+[][(![]+[])[+[]]+(![]+[])[!+[]+!+[]]+(![]+[])[+!+[]]+(!![]+[])[+[]]])[+!+[]+[+[]]]+([]+[])[([][(![]+[])[+[]]+(![]+[])[!+[]+!+[]]+(![]+[])[+!+[]]+(!![]+[])[+[]]]+[])[!+[]+!+[]+!+[]]+(!![]+[][(![]+[])[+[]]+(![]+[])[!+[]+!+[]]+(![]+[])[+!+[]]+(!![]+[])[+[]]])[+!+[]+[+[]]]+([][[]]+[])[+!+[]]+(![]+[])[!+[]+!+[]+!+[]]+(!![]+[])[+[]]+(!![]+[])[+!+[]]+([][[]]+[])[+[]]+([][(![]+[])[+[]]+(![]+[])[!+[]+!+[]]+(![]+[])[+!+[]]+(!![]+[])[+[]]]+[])[!+[]+!+[]+!+[]]+(!![]+[])[+[]]+(!![]+[][(![]+[])[+[]]+(![]+[])[!+[]+!+[]]+(![]+[])[+!+[]]+(!![]+[])[+[]]])[+!+[]+[+[]]]+(!![]+[])[+!+[]]][([][[]]+[])[+!+[]]+(![]+[])[+!+[]]+((+[])[([][(![]+[])[+[]]+(![]+[])[!+[]+!+[]]+(![]+[])[+!+[]]+(!![]+[])[+[]]]+[])[!+[]+!+[]+!+[]]+(!![]+[][(![]+[])[+[]]+(![]+[])[!+[]+!+[]]+(![]+[])[+!+[]]+(!![]+[])[+[]]])[+!+[]+[+[]]]+([][[]]+[])[+!+[]]+(![]+[])[!+[]+!+[]+!+[]]+(!![]+[])[+[]]+(!![]+[])[+!+[]]+([][[]]+[])[+[]]+([][(![]+[])[+[]]+(![]+[])[!+[]+!+[]]+(![]+[])[+!+[]]+(!![]+[])[+[]]]+[])[!+[]+!+[]+!+[]]+(!![]+[])[+[]]+(!![]+[][(![]+[])[+[]]+(![]+[])[!+[]+!+[]]+(![]+[])[+!+[]]+(!![]+[])[+[]]])[+!+[]+[+[]]]+(!![]+[])[+!+[]]]+[])[+!+[]+[+!+[]]]+(!![]+[])[!+[]+!+[]+!+[]]]](!+[]+!+[]+[+!+[]])"})))
@@ -93,7 +101,7 @@ client.on("messageCreate", async (message) => {
         .split("\n")
         .filter((obj) => obj.length > 0); // splitting args
       const language = argssplited[0].replace(/`/g, "").replace("compile,", ""); // language for the compile
-      const code = argssplited[1].replace(/`/g, "").replace(/,/g, " "); // code
+      const code = args.slice(1).join(" ").replace(/`/g, "").replace(language, ""); // code
       let langcompiled;
       supportedLanguages.forEach((lang, num) => {
         if (lang.language === supportedLanguagesObj[language] || lang.language === language) {
@@ -102,6 +110,7 @@ client.on("messageCreate", async (message) => {
       }); // finding the right language to compile in wandbox.org
       console.log(language);
       console.log(langcompiled);
+      console.log(args.slice(1).join(" "))
       if (!code) {
         message.reactions.removeAll();
         return message.channel.send(
@@ -547,6 +556,21 @@ client.on("messageCreate", async (message) => {
       });
     }
   }
+  if(cmd.startsWith("paste") || cmd.startsWith("sourcebin")) {
+    console.log(args)
+    if(!args) return message.channel.send(
+      "There is no codeblock or it is without a language. Make one by:\n\\`\\`\\`language\ncode\\`\\`\\`"
+    );
+    const argssplited = args
+    .join()
+    .split("\n")
+    .filter((obj) => obj.length > 0); // splitting args
+  const language = resolvelanguage(argssplited[0].replace(/`/g, "").replace("paste," || "sourcebin,", "")); // language for the compile
+  const code = argssplited[1].replace(/`/g, "").replace(/,/g, " "); // code
+  const key = (await axios.post("https://sourceb.in/api/bins/", {files: [{languageId: language, content: code}]})).data.key;
+  message.channel.send("Got it! The bin is at https://srcb.in/" + key)
+
+  }
   if (
     cmd.startsWith("template") ||
     cmd.startsWith("example") ||
@@ -632,16 +656,24 @@ client.on("messageCreate", async (message) => {
             {
               name: "`;compile`",
               value:
-                "Run it by appending a code block anywhere in the message. The supported languages are the languages that [Wandbox](https://wandbox.org) supports. For stdin, add `|stdinhere` before the code block. \n Example:\n\n;compile \\`\\`\\`py\nprint('Hello world!')\\`\\`\\` \n\n ;compile | hello there \\`\\`\\`py\nprint(input()) # prints out 'hello there'\n\\`\\`\\`",
+                "Compiles code.\nRun it by appending a code block anywhere in the message. The supported languages are the languages that [Wandbox](https://wandbox.org) supports. For stdin, add `|stdinhere` before the code block. \n Example:\n\n;compile \\`\\`\\`py\nprint('Hello world!')\\`\\`\\` \n\n ;compile | hello there \\`\\`\\`py\nprint(input()) # prints out 'hello there'\n\\`\\`\\`",
             },
             {
               name: "`;languages or ;lang`",
               value: "Gives a list of supported languages.",
             },
             {
-              name: ";templates",
+              name: "`;templates`",
               value:
                 "Gives a template for the language.\nRun it by adding a language name after it.\nExample: `;template py` returns a hello world code for Python. (This is provided by Wandbox and can be used in any language that it supports, use `;languages` to see them.)\nThis command can also be used as `;example` or `;sample` since I keep forgetting the command name :mario:",
+            },
+            {
+              name: "`;compile <sourcebin-url>`",
+              value: "Compiles sourcebin. This is technically the same command but has a different syntax. It will automatically recognize the language, so no need for that. Example:\n;compile https://sourceb.in/p7iKU3c8hL prints out \"Hello world\". Also, stdin doesn't work (yet)"
+            },
+            {
+              name: "`;paste` or `;sourcebin`",
+              value: "Makes a sourcebin link by the code provided. Example:\n;paste \\`\\`\\`\nprint(\"Hello world!\")\n\\`\\`\\`"
             }
           ),
       ],
