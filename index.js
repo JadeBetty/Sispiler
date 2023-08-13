@@ -860,6 +860,7 @@ client.on("messageCreate", async (message) => {
       pp = lang.name  
       }
     })
+    console.log(code)
     if (!code) {
       message.reactions.removeAll();
       return message.channel.send(
@@ -987,7 +988,30 @@ client.on("messageUpdate", async (_, nmessage) => {
     erl: "Erlang",
     crystal: "Crystal",
   };
-
+  const supportedFormatLanguagesObj = {
+    js: "javascript",
+    py: "python",
+    java: "java",
+    sh: "bash",
+    ts: "typescript"
+  }
+  const supportedFormatLanguages = [
+    {
+      name: "javascript"
+    },
+    {
+      name: "python"
+    },
+    {
+      name: "java"
+    },
+    {
+      name: "bash"
+    },
+    {
+      name: "typescript"
+    }
+  ]
   const args = nmessage.content.slice(";".length).trim().split(/ +/);
   const emojies = [
     "<a:peepee:1132893146104221739>",
@@ -1536,6 +1560,32 @@ client.on("messageUpdate", async (_, nmessage) => {
     })
 
   }
+  if(cmd.startsWith("format")) {
+    const argssplited = args
+    .join()
+    .split("\n")
+    .filter((obj) => obj.length > 0); // splitting args
+    const language = argssplited[0].replace(/`/g, "").replace("format,", "");
+    const code = args.slice(1).join(" ").replace(/`/g, "").replace(language, "");
+    let pp;
+    supportedFormatLanguages.forEach(lang => {
+      if(lang.name === supportedFormatLanguagesObj[language]) {
+      pp = lang.name  
+      }
+    })
+    if (!code) {
+      nmessage.reactions.removeAll();
+      return omessage.edit(
+        "There is no codeblock or it is without a language. Make one by:\n\\`\\`\\`language\ncode\\`\\`\\`"
+      );
+    }
+    if(!pp) {
+      return omessage.edit("The only supported languages at the moment are js, ts, py, java and bash.")
+    }
+    omessage.edit({embeds: [new discord.EmbedBuilder().setTitle("Formatted content").setDescription(`\`\`\`${(await axios.post("https://balls-idk.vercel.app/format", {code: code, lang: pp})).data}\`\`\``)]}).then(async e => {
+      db.set(`bmessage`, {umsg: nmessage.id, bmsg: e.id})
+    })
+  }
   if (
     cmd.startsWith("template") ||
     cmd.startsWith("example") ||
@@ -1620,12 +1670,21 @@ function resolvelanguage(language) {
       return Number(id);
     }
   }
-
-  // This runs if none of the above checks pass
-  throw new Error(`Unable to find language "${language}"`);
+  console.log("cannot find language dumbass")
 }
 
 function resolvelanguageId(id) {
   const idfk = require("./sans_1.json")[String(id)].name;
   return idfk;
 }
+
+process.on('unhandledRejection', async (reason, p) => {
+  console.log(reason)
+});
+
+process.on('uncaughtException', (reason, origin) => {
+  console.log(reason)
+});
+process.on('uncaughtExceptionMonitor', (reason, origin) => {
+  console.log(reason)
+})
