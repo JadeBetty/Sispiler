@@ -912,10 +912,6 @@ console.log(args)
 });
 client.on("messageUpdate", async (_, nmessage) => {
   if (nmessage.author.bot) return;
-  console.log(omessage.createdAt)
-  console.log(await db.get(`bmessage`))
-  const dbmsg = await db.get(`bmessage`);
-  console.log(dbmsg)
   const browser = await puppeteer.launch({
     args: ["--no-sandbox"],
     headless: "new",
@@ -925,6 +921,8 @@ client.on("messageUpdate", async (_, nmessage) => {
   await page.goto(`file://${filePath}`);
   if(nmessage === omessage) return;
   if(!nmessage.content.startsWith(";")) return;
+  const dbmsg = await db.get(`bmessage`);
+  console.log(dbmsg)
   const cmd = nmessage.content.replace(/^;/, "");
   const regex1 = /compile\s+```([a-zA-Z]+)\s+([\s\S]+?)```/; //compile `language \n code`
   const regex2 = /\s*compile\s+([a-zA-Z]+)/; //compile language `code`
