@@ -3,3 +3,4 @@ node_modules
 screenshot.png
 index.html
 .env
+json.sqlite
