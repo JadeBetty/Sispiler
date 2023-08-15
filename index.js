@@ -82,7 +82,7 @@ client.on("interactionCreate", async i => {
   message.react(randomemoji);
   const idk = message.content.split(/`/g)[3]
   const language = (idk.split("\n")[0]).replace(/`/g, "");
-  const code = (idk.split("\n")[1]).replace(/`/g, "").replace(language, "");
+  const code = idk.replace(/`/g, "").replace(language, "");
   let langcompiled;
   supportedLanguages.forEach((lang, num) => {
     if (lang.language === supportedLanguagesObj[language] || lang.language === language) {
@@ -95,7 +95,23 @@ client.on("interactionCreate", async i => {
       "There is no codeblock or it is without a language. Make one by:\n\\`\\`\\`language\ncode\\`\\`\\`", {ephemeral: true}
     );
   }
-
+  if (language === "brainfuck" || language === "bf") {
+    const brainfuck = await axios.post("https://balls-idk.vercel.app", {code: code});
+    message.reactions.removeAll();
+    i.reply({
+      embeds: [
+        new discord.EmbedBuilder()
+          .setTitle("Program Output")
+          .setDescription(
+            `\`\`\`${brainfuck.data}\`\`\``
+          )
+          .setColor("#1abc9c")
+          .setFooter({
+            text: `${i.user.tag} | ${langcompiled} on a custom made compiler`,
+          }),
+      ],
+    })
+  }
   if (language === "html") {
     message.reactions.removeAll();
     fs.writeFileSync("index.html", code);
@@ -104,9 +120,7 @@ client.on("interactionCreate", async i => {
     await browser.close();
     i.reply({
       files: [screenshit],
-    }).then(async e => {
-      db.set(`bmessage`, {umsg: message.id, bmsg: e.id})
-    });
+    })
     return;
   }
 
@@ -145,8 +159,6 @@ client.on("interactionCreate", async i => {
             text: `${i.user.tag} | ${langcompiled} on wandbox.org`,
           }),
       ],
-    }).then(async e => {
-      db.set(`bmessage`, {umsg: message.id, bmsg: e.id})
     })
   } else {
     //yes error
@@ -164,9 +176,7 @@ client.on("interactionCreate", async i => {
             text: `${message.author.tag} | ${langcompiled} on wandbox.org`,
           }),
       ],
-    }).then(async e => {
-      db.set(`bmessage`, {umsg: message.id, bmsg: e.id})
-    });
+    })
   }
 })
 client.on("messageCreate", async (message) => {
@@ -267,6 +277,25 @@ client.on("messageCreate", async (message) => {
           "There is no codeblock or it is without a language. Make one by:\n\\`\\`\\`language\ncode\\`\\`\\`"
         );
       }
+
+      if (language === "brainfuck" || language === "bf") {
+        const brainfuck = await axios.post("https://balls-idk.vercel.app", {code: code});
+        message.reactions.removeAll();
+        message.channel.send({
+          embeds: [
+            new discord.EmbedBuilder()
+              .setTitle("Program Output")
+              .setDescription(
+                `\`\`\`${brainfuck.data}\`\`\``
+              )
+              .setColor("#1abc9c")
+              .setFooter({
+                text: `${message.author.tag} | ${langcompiled} on a custom made compiler`,
+              }),
+          ],
+        })
+      }
+
       if (language === "html") {
         message.reactions.removeAll();
         fs.writeFileSync("index.html", code);
@@ -368,6 +397,23 @@ client.on("messageCreate", async (message) => {
                 langcompiled = lang.name;
               }
             });
+            if(bin.Thelanguage == "Brainfuck") {
+                const brainfuck = await axios.post("https://balls-idk.vercel.app", {code: bin.content});
+                message.reactions.removeAll();
+                message.channel.send({
+                  embeds: [
+                    new discord.EmbedBuilder()
+                      .setTitle("Program Output")
+                      .setDescription(
+                        `\`\`\`${brainfuck.data}\`\`\``
+                      )
+                      .setColor("#1abc9c")
+                      .setFooter({
+                        text: `${message.author.tag} | ${langcompiled} on a custom made compiler`,
+                      }),
+                  ],
+                })
+            }
             if (bin.Thelanguage == "HTML") {
               message.reactions.removeAll();
               fs.writeFileSync("index.html", bin.content);
@@ -465,6 +511,23 @@ client.on("messageCreate", async (message) => {
         return message.channel.send(
           "There is no codeblock or it is without a language. Make one by:\n\\`\\`\\`language\ncode\\`\\`\\`"
         );
+      }
+      if (language === "brainfuck" || language === "bf") {
+        const brainfuck = await axios.post("https://balls-idk.vercel.app", {code: code});
+        message.reactions.removeAll();
+        message.channel.send({
+          embeds: [
+            new discord.EmbedBuilder()
+              .setTitle("Program Output")
+              .setDescription(
+                `\`\`\`${brainfuck.data}\`\`\``
+              )
+              .setColor("#1abc9c")
+              .setFooter({
+                text: `${message.author.tag} | ${langcompiled} on a custom made compiler`,
+              }),
+          ],
+        })
       }
       if (language === "html") {
         message.reactions.removeAll();
@@ -1041,6 +1104,23 @@ client.on("messageUpdate", async (_, nmessage) => {
           "There is no codeblock or it is without a language. Make one by:\n\\`\\`\\`language\ncode\\`\\`\\`"
         );
       }
+      if (language === "brainfuck" || language === "bf") {
+        const brainfuck = await axios.post("https://balls-idk.vercel.app", {code: code});
+        nmessage.reactions.removeAll();
+        omessage.edit({
+          embeds: [
+            new discord.EmbedBuilder()
+              .setTitle("Program Output")
+              .setDescription(
+                `\`\`\`${brainfuck.data}\`\`\``
+              )
+              .setColor("#1abc9c")
+              .setFooter({
+                text: `${nmessage.author.tag} | ${langcompiled} on a custom made compiler`,
+              }),
+          ],
+        })
+      }
       if (language === "html") {
         fs.writeFileSync("index.html", code);
         await page.screenshot({ path: "screenshot.png" });
@@ -1141,6 +1221,25 @@ client.on("messageUpdate", async (_, nmessage) => {
                 langcompiled = lang.name;
               }
             });
+
+            if (bin.Thelanguage == "Brainfuck") {
+              const brainfuck = await axios.post("https://balls-idk.vercel.app", {code: bin.content});
+              nmessage.reactions.removeAll();
+              omessage.edit({
+                embeds: [
+                  new discord.EmbedBuilder()
+                    .setTitle("Program Output")
+                    .setDescription(
+                      `\`\`\`${brainfuck.data}\`\`\``
+                    )
+                    .setColor("#1abc9c")
+                    .setFooter({
+                      text: `${nmessage.author.tag} | ${langcompiled} on a custom made compiler`,
+                    }),
+                ],
+              })
+            }
+
             if (bin.Thelanguage == "HTML") {
               fs.writeFileSync("index.html", bin.content);
               await page.screenshot({ path: "screenshot.png" });
@@ -1240,6 +1339,25 @@ client.on("messageUpdate", async (_, nmessage) => {
           "There is no codeblock or it is without a language. Make one by:\n\\`\\`\\`language\ncode\\`\\`\\`"
         );
       }
+
+      if (language === "brainfuck" || language === "bf") {
+        const brainfuck = await axios.post("https://balls-idk.vercel.app", {code: code});
+        nmessage.reactions.removeAll();
+        omessage.edit({
+          embeds: [
+            new discord.EmbedBuilder()
+              .setTitle("Program Output")
+              .setDescription(
+                `\`\`\`${brainfuck.data}\`\`\``
+              )
+              .setColor("#1abc9c")
+              .setFooter({
+                text: `${nmessage.author.tag} | ${langcompiled} on a custom made compiler`,
+              }),
+          ],
+        })
+      }
+      
       if (language === "html") {
         nmessage.reactions.removeAll();
         fs.writeFileSync("index.html", code);
