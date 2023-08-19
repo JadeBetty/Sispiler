@@ -28,10 +28,10 @@ app.get("/ip", async (req, res) => {
   );
 });
 
-const randomjoke = `${((require("./jokesreal.json"))[Math.floor(Math.random() * (require("./jokesreal.json")).length)])["setup"]} ${((require("./jokesreal.json"))[Math.floor(Math.random() * (require("./jokesreal.json")).length)])["punchline"]}` 
+ 
 client.login(process.env.token);
 client.on("ready", () => {
-  client.user.setActivity(randomjoke, {type: discord.ActivityType.Custom})//.then(() => console.log("joke has prob been replaced idk lol"))
+  setInterval(() => {client.user.setActivity(`${((require("./jokesreal.json"))[Math.floor(Math.random() * (require("./jokesreal.json")).length)])["setup"]} ${((require("./jokesreal.json"))[Math.floor(Math.random() * (require("./jokesreal.json")).length)])["punchline"]}`, {type: discord.ActivityType.Custom})}, 60 * 1000);
   console.log(`${client.user.tag} is logged in`); app.get('/apidata', async (_, res) => res.json({serverCount: client.guilds.cache.size,uptime: client.uptime}));
 });
 
